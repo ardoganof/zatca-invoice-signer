@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Copy SDK files and source
 COPY zatca-sdk/ zatca-sdk/
-COPY main.py .
+COPY app.py .
 COPY requirements.txt .
 
 # Install Python dependencies
