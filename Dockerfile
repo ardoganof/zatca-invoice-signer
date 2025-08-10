@@ -1,5 +1,10 @@
 FROM openjdk:17-slim
 
+ENV FATOORA_HOME=/app/zatca-sdk/Apps
+
+# Add this line before installing Python packages
+RUN apt-get update && apt-get install -y jq
+
 # Install Python and pip
 RUN apt-get update && apt-get install -y python3 python3-pip
 
