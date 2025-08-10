@@ -21,18 +21,13 @@ async def sign_invoice(
     with open(cert_path, "wb") as f:
         f.write(await cert_file.read())
 
-    # Ensure SDK script is executable
-    sdk_fatoora = "./zatca-sdk/Apps/fatoora"  # For Linux/Render environment
-    os.chmod(sdk_fatoora, 0o755)
-
-    # Build the command (no .jar call — use fatoora CLI directly)
+    # Call the ZATCA SDK sign command (adjust according to SDK)
     cmd = [
-        sdk_fatoora,
-        "-sign",
-        "-invoice", xml_path,
-        "-signedInvoice", signed_output_path,
-        "-cert", cert_path,
-        "-password", cert_password
+        "java", "-jar", "zatca-sdk/signer.jar",
+        "--xml", xml_path,
+        "--cert", cert_path,
+        "--password", cert_password,
+        "--out", signed_output_path
     ]
 
     try:
@@ -41,8 +36,4 @@ async def sign_invoice(
             signed_xml = f.read()
         return {"status": "success", "signed_invoice": signed_xml}
     except subprocess.CalledProcessError as e:
-        return {
-            "status": "error",
-            "error_output": e.stderr,
-            "stdout": e.stdout
-        }
+        return {"status": "error", "error_output": e.stderr}
