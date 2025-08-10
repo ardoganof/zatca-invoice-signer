@@ -25,6 +25,8 @@ async def sign_invoice(
     sdk_fatoora = "./zatca-sdk/Apps/fatoora"  # For Linux/Render environment
     os.chmod(sdk_fatoora, 0o755)
 
+    os.environ["FATOORA_HOME"] = "/app/zatca-sdk/Apps"
+
     # Build the command (no .jar call — use fatoora CLI directly)
     cmd = [
         sdk_fatoora,
@@ -36,9 +38,16 @@ async def sign_invoice(
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        with open(signed_output_path, "r") as f:
-            signed_xml = f.read()
+	result = subprocess.run(cmd, capture_output=True, text=True)
+	if result.returncode != 0:
+	    return {"status": "error", "stderr": result.stderr, "stdout": result.stdout}
+
+	if not os.path.exists(signed_output_path):
+	    return {"status": "error", "message": "Signed file not found", "stdout": result.stdout, "stderr": result.stderr}
+
+	with open(signed_output_path, "r") as f:
+	    signed_xml = f.read()
+
         return {"status": "success", "signed_invoice": signed_xml}
     except subprocess.CalledProcessError as e:
         return {
