@@ -10,10 +10,15 @@ async def sign_invoice(
     cert_file: UploadFile,
     cert_password: str = Form(...)
 ):
-    xml_path = "/app/input_invoice.xml"
+    xml_path = "/app/zatca-sdk/Data/Input/input_invoice.xml"
     cert_path = "/app/cert.pfx"
-    key_path = "/app/private_key.key"
-    signed_output_path = "/app/signed_invoice.xml"
+    certs_dir = "/app/zatca-sdk/Data/Certificates"
+    signed_output_path = "/app/zatca-sdk/Data/Output/signed_invoice.xml"
+
+    # Ensure directories exist
+    os.makedirs("/app/zatca-sdk/Data/Input", exist_ok=True)
+    os.makedirs("/app/zatca-sdk/Data/Output", exist_ok=True)
+    os.makedirs(certs_dir, exist_ok=True)
 
     # Save XML invoice
     with open(xml_path, "wb") as f:
@@ -23,30 +28,35 @@ async def sign_invoice(
     with open(cert_path, "wb") as f:
         f.write(await cert_file.read())
 
-    # Extract private key from PFX
-    try:
-        subprocess.run([
-            "openssl", "pkcs12",
-            "-in", cert_path,
-            "-nocerts",
-            "-nodes",
-            "-password", f"pass:{cert_password}",
-            "-out", key_path
-        ], check=True)
-    except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Failed to extract private key: {e.stderr}"}
+    # Extract private key (PEM)
+    subprocess.run([
+        "openssl", "pkcs12",
+        "-in", cert_path,
+        "-nocerts",
+        "-nodes",
+        "-password", f"pass:{cert_password}",
+        "-out", f"{certs_dir}/ec-secp256k1-priv-key.pem"
+    ], check=True)
 
-    # Ensure fatoora script is executable
+    # Extract public certificate (PEM)
+    subprocess.run([
+        "openssl", "pkcs12",
+        "-in", cert_path,
+        "-clcerts",
+        "-nokeys",
+        "-password", f"pass:{cert_password}",
+        "-out", f"{certs_dir}/cert.pem"
+    ], check=True)
+
+    # Make fatoora executable
     subprocess.run(["chmod", "+x", "/app/zatca-sdk/Apps/fatoora"], check=True)
 
-    # Call fatoora sign command
+    # Run signing command
     cmd = [
         "/app/zatca-sdk/Apps/fatoora",
         "-sign",
         "-invoice", xml_path,
-        "-signedInvoice", signed_output_path,
-        "-pk", key_path,
-        "-pkPassword", cert_password
+        "-signedInvoice", signed_output_path
     ]
 
     try:
