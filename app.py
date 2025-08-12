@@ -10,48 +10,39 @@ async def sign_invoice(
     cert_file: UploadFile,
     cert_password: str = Form(...)
 ):
-    xml_path = "/app/zatca-sdk/Data/Input/input_invoice.xml"
+    # Paths
+    xml_path = "/app/input_invoice.xml"
     cert_path = "/app/cert.pfx"
+    signed_output_path = "/app/signed_invoice.xml"
     certs_dir = "/app/zatca-sdk/Data/Certificates"
-    signed_output_path = "/app/zatca-sdk/Data/Output/signed_invoice.xml"
 
-    # Ensure directories exist
-    os.makedirs("/app/zatca-sdk/Data/Input", exist_ok=True)
-    os.makedirs("/app/zatca-sdk/Data/Output", exist_ok=True)
-    os.makedirs(certs_dir, exist_ok=True)
-
-    # Save XML invoice
+    # Save uploaded files
     with open(xml_path, "wb") as f:
         f.write(await xml_invoice.read())
 
-    # Save PFX certificate
     with open(cert_path, "wb") as f:
         f.write(await cert_file.read())
 
-    # Extract private key (PEM)
-    subprocess.run([
-        "openssl", "pkcs12",
-        "-in", cert_path,
-        "-nocerts",
-        "-nodes",
-        "-password", f"pass:{cert_password}",
-        "-out", f"{certs_dir}/ec-secp256k1-priv-key.pem"
-    ], check=True)
+    # Log certificate folder contents
+    if os.path.exists(certs_dir):
+        print("Certificates folder exists. Contents:", os.listdir(certs_dir))
+    else:
+        return {"status": "error", "message": f"Certificates folder not found: {certs_dir}"}
 
-    # Extract public certificate (PEM)
-    subprocess.run([
-        "openssl", "pkcs12",
-        "-in", cert_path,
-        "-clcerts",
-        "-nokeys",
-        "-password", f"pass:{cert_password}",
-        "-out", f"{certs_dir}/cert.pem"
-    ], check=True)
+    # Check for private key
+    priv_key_path = os.path.join(certs_dir, "ec-secp256k1-priv-key.pem")
+    if not os.path.exists(priv_key_path):
+        return {"status": "error", "message": f"Private key file not found: {priv_key_path}"}
 
-    # Make fatoora executable
-    subprocess.run(["chmod", "+x", "/app/zatca-sdk/Apps/fatoora"], check=True)
+    # Fix permissions
+    subprocess.run(["chmod", "644", priv_key_path], check=True)
+    subprocess.run(["chmod", "644", os.path.join(certs_dir, "cert.pem")], check=True)
 
-    # Run signing command
+    # Prepare environment for SDK
+    env = os.environ.copy()
+    env["FATOORA_HOME"] = "/app/zatca-sdk/Apps"
+
+    # Sign invoice
     cmd = [
         "/app/zatca-sdk/Apps/fatoora",
         "-sign",
@@ -60,27 +51,12 @@ async def sign_invoice(
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, env=env, check=True)
         if os.path.exists(signed_output_path):
             with open(signed_output_path, "r") as f:
                 signed_xml = f.read()
-            return {
-                "status": "success",
-                "stdout": result.stdout,
-                "signed_invoice": signed_xml
-            }
+            return {"status": "success", "signed_invoice": signed_xml, "stdout": result.stdout}
         else:
-            return {
-                "status": "error",
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "message": "Signing failed — signed file not created."
-            }
+            return {"status": "error", "stdout": result.stdout, "stderr": result.stderr, "message": "Signing failed — signed file not created."}
     except subprocess.CalledProcessError as e:
-        return {
-            "status": "error",
-            "return_code": e.returncode,
-            "stdout": e.stdout,
-            "stderr": e.stderr,
-            "message": "Signing failed — check logs above."
-        }
+        return {"status": "error", "return_code": e.returncode, "stdout": e.stdout, "stderr": e.stderr}
