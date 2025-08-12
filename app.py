@@ -12,26 +12,40 @@ async def sign_invoice(
 ):
     xml_path = "/app/input_invoice.xml"
     cert_path = "/app/cert.pfx"
+    key_path = "/app/private_key.key"
     signed_output_path = "/app/signed_invoice.xml"
 
-    # Save uploaded XML
+    # Save XML invoice
     with open(xml_path, "wb") as f:
         f.write(await xml_invoice.read())
 
-    # Save uploaded certificate
+    # Save PFX certificate
     with open(cert_path, "wb") as f:
         f.write(await cert_file.read())
 
-    # Make fatoora executable (important for Render/Linux)
-    subprocess.run(["chmod", "+x", "./zatca-sdk/Apps/fatoora"], check=True)
+    # Extract private key from PFX
+    try:
+        subprocess.run([
+            "openssl", "pkcs12",
+            "-in", cert_path,
+            "-nocerts",
+            "-nodes",
+            "-password", f"pass:{cert_password}",
+            "-out", key_path
+        ], check=True)
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "message": f"Failed to extract private key: {e.stderr}"}
 
-    # Run the signing command
+    # Ensure fatoora script is executable
+    subprocess.run(["chmod", "+x", "/app/zatca-sdk/Apps/fatoora"], check=True)
+
+    # Call fatoora sign command
     cmd = [
-        "./zatca-sdk/Apps/fatoora",
+        "/app/zatca-sdk/Apps/fatoora",
         "-sign",
         "-invoice", xml_path,
         "-signedInvoice", signed_output_path,
-        "-pk", cert_path,
+        "-pk", key_path,
         "-pkPassword", cert_password
     ]
 
@@ -57,5 +71,6 @@ async def sign_invoice(
             "status": "error",
             "return_code": e.returncode,
             "stdout": e.stdout,
-            "stderr": e.stderr
+            "stderr": e.stderr,
+            "message": "Signing failed — check logs above."
         }
