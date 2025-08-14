@@ -1,29 +1,31 @@
-# Use a base image with Python and Java
+# Use a lightweight Python image with Debian base
 FROM python:3.9-slim
 
-# Install Java, jq, and any other required tools
+# Install required tools: Java 17, jq
 RUN apt-get update && \
-    apt-get install -y openjdk-17-jre jq && \
-    apt-get clean
+    apt-get install -y software-properties-common curl && \
+    apt-get install -y openjdk-17-jre-headless jq && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
+# Set environment variables
+ENV FATOORA_HOME=/app/zatca-sdk/Apps
+ENV PATH="${PATH}:${FATOORA_HOME}"
+
+# Create app directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of your application files
+# Copy all files into the container
 COPY . .
 
-# Make fatoora executable
-RUN chmod -R +x /app/zatca-sdk/Apps
+# Ensure fatoora is executable
+RUN chmod +x ${FATOORA_HOME}/fatoora
 
-# Set environment variable for FATOORA_HOME
-ENV FATOORA_HOME=/app/zatca-sdk/Apps
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port FastAPI will run on
+# Expose the app port
 EXPOSE 8000
 
-# Start the FastAPI app with uvicorn
+# Start FastAPI with uvicorn
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
