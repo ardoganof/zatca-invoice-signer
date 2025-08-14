@@ -7,8 +7,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set FATOORA_HOME to the Certificates folder
-ENV FATOORA_HOME=/app/zatca-sdk/Data/Certificates
+# Set FATOORA_HOME to the SDK root
+ENV FATOORA_HOME=/app/zatca-sdk
 ENV PATH="${PATH}:${FATOORA_HOME}"
 
 # Create app directory
