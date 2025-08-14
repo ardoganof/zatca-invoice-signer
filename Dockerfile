@@ -1,9 +1,8 @@
-# Use a lightweight Python image with Debian base
-FROM python:3.9-slim
+# Use Debian Bullseye as base to ensure Java 17 availability
+FROM python:3.9-slim-bullseye
 
 # Install required tools: Java 17, jq
 RUN apt-get update && \
-    apt-get install -y software-properties-common curl && \
     apt-get install -y openjdk-17-jre-headless jq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
