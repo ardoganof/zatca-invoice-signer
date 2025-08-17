@@ -1,27 +1,19 @@
-from fastapi import FastAPI, UploadFile, Form
+from fastapi import FastAPI, UploadFile
 import subprocess
 import os
 
 app = FastAPI()
 
 @app.post("/sign-invoice")
-async def sign_invoice(
-    xml_invoice: UploadFile,
-    cert_file: UploadFile,
-    cert_password: str = Form(...)
-):
-    # Save uploaded files
+async def sign_invoice(xml_invoice: UploadFile):
+    # Save uploaded XML file
     xml_path = "input_invoice.xml"
-    cert_path = "cert.pfx"
     signed_output_path = "signed_invoice.xml"
 
     with open(xml_path, "wb") as f:
         f.write(await xml_invoice.read())
 
-    with open(cert_path, "wb") as f:
-        f.write(await cert_file.read())
-
-    # Call the ZATCA SDK sign command
+    # Call ZATCA SDK (fatoora command already knows where cert.pem & key are)
     cmd = [
         "/app/zatca-sdk/Apps/fatoora",
         "-sign",
@@ -34,24 +26,26 @@ async def sign_invoice(
             cmd,
             capture_output=True,
             text=True,
-            env={**os.environ, "FATOORA_HOME": "/app/zatca-sdk/Apps"}
+            check=True
         )
-        if result.returncode == 0 and os.path.exists(signed_output_path):
+
+        # Read signed invoice if created
+        if os.path.exists(signed_output_path):
             with open(signed_output_path, "r") as f:
                 signed_xml = f.read()
             return {"status": "success", "signed_invoice": signed_xml}
-        else:
-            return {
-                "status": "error",
-                "return_code": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "message": "Signing failed — signed file not created."
-            }
+
+        return {
+            "status": "error",
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "message": "Signing failed — signed file not created."
+        }
+
     except subprocess.CalledProcessError as e:
         return {
             "status": "error",
-            "error_output": e.stderr,
+            "return_code": e.returncode,
             "stdout": e.stdout,
-            "message": "Subprocess failed."
+            "stderr": e.stderr
         }
