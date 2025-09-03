@@ -14,7 +14,13 @@ ENV PATH="${PATH}:${FATOORA_HOME}"
 # Create app directory
 WORKDIR /app
 
-# Copy all project files
+# Copy Python app files
+COPY app.py requirements.txt ./
+
+# Copy the full SDK folder explicitly (important!)
+COPY zatca-sdk ./zatca-sdk
+
+# Copy all project files (including SDK folders: Apps + Data/Certificates)
 COPY . .
 
 # Ensure fatoora script is executable
