@@ -7,23 +7,17 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set FATOORA_HOME to the Apps folder where the JAR and global.json are
+# Set FATOORA_HOME to Apps (where global.json + JAR live)
 ENV FATOORA_HOME=/app/zatca-sdk/Apps
 ENV PATH="${PATH}:${FATOORA_HOME}"
 
 # Create app directory
 WORKDIR /app
 
-# Copy Python app files
-COPY app.py requirements.txt ./
-
-# Copy the full SDK folder explicitly (important!)
-COPY zatca-sdk ./zatca-sdk
-
 # Copy all project files (including SDK folders: Apps + Data/Certificates)
 COPY . .
 
-# Ensure fatoora script is executable
+# Make fatoora executable
 RUN chmod +x /app/zatca-sdk/Apps/fatoora
 
 # Install Python dependencies
