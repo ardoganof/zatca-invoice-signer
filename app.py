@@ -43,4 +43,14 @@ async def sign_invoice(xml_invoice: UploadFile):
                 "stderr": result.stderr,
                 "message": "Signed file not created"}
 
-# existing debug and preflight endpoints stay the same
+@app.get("/preflight")
+async def preflight():
+    import os
+    import pathlib
+    return {
+        "cwd": pathlib.Path().resolve().as_posix(),
+        "FATOORA_HOME": os.environ.get("FATOORA_HOME"),
+    }
+
+
+
