@@ -46,3 +46,13 @@ async def debug_files():
         for name in files:
             result.append(os.path.join(root, name))
     return {"files": result}
+
+@app.get("/preflight")
+async def preflight():
+    import os
+    import pathlib
+    return {
+        "cwd": pathlib.Path().resolve().as_posix(),
+        "FATOORA_HOME": os.environ.get("FATOORA_HOME"),
+    }
+
