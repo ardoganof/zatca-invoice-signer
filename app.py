@@ -45,11 +45,9 @@ async def sign_invoice(xml_invoice: UploadFile):
 
 @app.get("/preflight")
 async def preflight():
-    import os
-    import pathlib
     return {
-        "cwd": pathlib.Path().resolve().as_posix(),
-        "FATOORA_HOME": os.environ.get("FATOORA_HOME"),
+        "cert_exists": os.path.exists("/app/zatca-sdk/Data/Certificates/cert.pem"),
+        "key_exists": os.path.exists("/app/zatca-sdk/Data/Certificates/ec-secp256k1-priv-key.pem")
     }
 
 
