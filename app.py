@@ -8,6 +8,7 @@ app = FastAPI()
 async def sign_invoice(xml_invoice: UploadFile):
     # Paths relative to the SDK root
     sdk_root = "/app/zatca-sdk"
+    fatoora_root = "/app/zatca-sdk/Apps"
     xml_path = "input_invoice.xml"
     signed_output_path = "signed_invoice.xml"
 
@@ -24,7 +25,7 @@ async def sign_invoice(xml_invoice: UploadFile):
     # Run CLI from the SDK root
     result = subprocess.run(
         cmd,
-        cwd=sdk_root,       # run from /app/zatca-sdk so Data/Certificates can be found
+        cwd=fatoora_root,       # run from /app/zatca-sdk so Data/Certificates can be found
         env=env,
         capture_output=True,
         text=True
