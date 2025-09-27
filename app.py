@@ -14,12 +14,14 @@ async def sign_invoice(xml_invoice: UploadFile):
         f.write(await xml_invoice.read())
 
     # environment: FATOORA_HOME must point to Apps
-    env = {**os.environ, "FATOORA_HOME": "/app/zatca-sdk/Apps"}
+     env = {**os.environ, "FATOORA_HOME": f"{sdk_root}/Apps"}
 
     # run the CLI from the SDK root
-    cmd = ["./Apps/fatoora", "-sign",
-           "-invoice", xml_file,
-           "-signedInvoice", signed_file]
+    cmd = ["java", "-jar", f"{sdk_root}/Apps/zatca-einvoicing-sdk-238-R3.4.3.jar",
+       "-config", f"{sdk_root}/Configuration/config.json",
+       "-cmd", "sign",
+       "-input", f"{sdk_root}/input_invoice.xml",
+       "-output", f"{sdk_root}/signed_invoice.xml"]
 
     result = subprocess.run(
         cmd,
