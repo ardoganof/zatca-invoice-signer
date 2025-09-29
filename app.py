@@ -1,43 +1,50 @@
 from fastapi import FastAPI, UploadFile
 import subprocess, os
+from pathlib import Path
 
 app = FastAPI()
 
+# Resolve SDK root relative to this file, works on Windows & Linux
+SDK_ROOT = (Path(__file__).parent / "zatca-sdk").resolve()
+APPS_DIR = SDK_ROOT / "Apps"
+CERTS_DIR = SDK_ROOT / "Data" / "Certificates"
+
+@app.get("/preflight")
+def preflight():
+    return {
+        "cwd": str(Path().resolve()),
+        "sdk_root": str(SDK_ROOT),
+        "fatoora_home": os.environ.get("FATOORA_HOME"),
+        "cert_exists": (CERTS_DIR / "cert.pem").exists(),
+        "key_exists": (CERTS_DIR / "ec-secp256k1-priv-key.pem").exists(),
+    }
+
 @app.post("/sign-invoice")
 async def sign_invoice(xml_invoice: UploadFile):
-    sdk_root = "/app/zatca-sdk"                         # root of the SDK
-    xml_file   = "input_invoice.xml"
-    signed_file = "signed_invoice.xml"
+    xml_name = "input_invoice.xml"
+    signed_name = "signed_invoice.xml"
+    xml_path = SDK_ROOT / xml_name
+    signed_path = SDK_ROOT / signed_name
 
-    # write invoice into SDK directory
-    with open(os.path.join(sdk_root, xml_file), "wb") as f:
+    # Save uploaded invoice under the SDK root (so relative lookups work)
+    with open(xml_path, "wb") as f:
         f.write(await xml_invoice.read())
 
- # environment: FATOORA_HOME must point to Apps
-    env = {**os.environ, "FATOORA_HOME": "/app/zatca-sdk/Apps"}
+    env = {**os.environ, "FATOORA_HOME": str(APPS_DIR)}
 
-    # run the CLI from the SDK root
-    cmd = ["./Apps/fatoora", "-sign",
-           "-invoice", xml_file,
-	   "-config", "/app/zatca-sdk/Configuration/config.json",
-           "-signedInvoice", signed_file]
+    # IMPORTANT: run from SDK root so the CLI sees Data/Certificates
+    cmd = ["./Apps/fatoora", "-sign", "-invoice", xml_name, "-signedInvoice", signed_name]
+    result = subprocess.run(cmd, cwd=str(SDK_ROOT), env=env, capture_output=True, text=True)
 
-
-result = subprocess.run(["java", "-jar", "/app/zatca-sdk/Apps/zatca-einvoicing-sdk-238-R3.4.3.jar",
-                         "-config", "/app/zatca-sdk/Configuration/config.json",
-                         "-cmd", "sign",
-                         "-input", "/app/zatca-sdk/input_invoice.xml",
-                         "-output", "/app/zatca-sdk/signed_invoice.xml"],
-                        cwd="/app/zatca-sdk",
-                        env={"FATOORA_HOME": "/app/zatca-sdk/Apps"})
-
-    if os.path.exists(os.path.join(sdk_root, signed_file)):
-        with open(os.path.join(sdk_root, signed_file), "r") as f:
+    if signed_path.exists():
+        with open(signed_path, "r", encoding="utf-8", errors="ignore") as f:
             signed_xml = f.read()
-        return {"status": "success", "signed_invoice": signed_xml, "stdout": result.stdout}
-    else:
-        return {"status": "error",
-                "return_code": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "message": "Signed file not created"}
+        return {"status": "success", "stdout": result.stdout, "signed_invoice": signed_xml}
+
+    return {
+        "status": "error",
+        "return_code": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "message": "Signed file not created"
+    }
