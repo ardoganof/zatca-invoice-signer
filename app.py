@@ -23,13 +23,13 @@ async def sign_invoice(xml_invoice: UploadFile):
            "-signedInvoice", signed_file]
 
 
-    result = subprocess.run(
-        cmd,
-        cwd=sdk_root,
-        env=env,
-        capture_output=True,
-        text=True
-    )
+result = subprocess.run(["java", "-jar", "/app/zatca-sdk/Apps/zatca-einvoicing-sdk-238-R3.4.3.jar",
+                         "-config", "/app/zatca-sdk/Configuration/config.json",
+                         "-cmd", "sign",
+                         "-input", "/app/zatca-sdk/input_invoice.xml",
+                         "-output", "/app/zatca-sdk/signed_invoice.xml"],
+                        cwd="/app/zatca-sdk",
+                        env={"FATOORA_HOME": "/app/zatca-sdk/Apps"})
 
     if os.path.exists(os.path.join(sdk_root, signed_file)):
         with open(os.path.join(sdk_root, signed_file), "r") as f:
