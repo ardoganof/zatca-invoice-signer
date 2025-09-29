@@ -48,3 +48,51 @@ async def sign_invoice(xml_invoice: UploadFile):
         "stderr": result.stderr,
         "message": "Signed file not created"
     }
+
+@app.get("/zdebug")
+def zdebug():
+    import os, json
+    from pathlib import Path
+
+    sdk_root = Path(__file__).parent.joinpath("zatca-sdk").resolve()
+    cert_dir = sdk_root / "Data" / "Certificates"
+    apps_dir = sdk_root / "Apps"
+
+    def ls(p: Path):
+        try:
+            return [{"name": f.name, "size": f.stat().st_size} for f in p.iterdir()]
+        except Exception as e:
+            return f"ERR: {e}"
+
+    # Try fatoora -help from both /app and sdk root
+    import subprocess
+    def run(cmd, cwd=None, env=None):
+        try:
+            r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=8)
+            return {"rc": r.returncode, "stdout": r.stdout[-5000:], "stderr": r.stderr[-5000:], "cwd": str(cwd)}
+        except Exception as e:
+            return {"error": str(e)}
+
+    env = {**os.environ, "FATOORA_HOME": str(apps_dir)}
+    out1 = run(["./Apps/fatoora", "-help"], cwd=str(sdk_root), env=env)
+    out2 = run(["./Apps/fatoora", "-help"], cwd="/app", env=env)
+
+    return {
+        "cwd": str(Path().resolve()),
+        "FATOORA_HOME": os.environ.get("FATOORA_HOME"),
+        "sdk_root": str(sdk_root),
+        "exists": {
+            "apps_dir": apps_dir.exists(),
+            "cert_dir": cert_dir.exists(),
+            "cert": (cert_dir / "cert.pem").exists(),
+            "key": (cert_dir / "ec-secp256k1-priv-key.pem").exists()
+        },
+        "ls": {
+            "/app": ls(Path("/app")),
+            "/app/zatca-sdk": ls(Path("/app/zatca-sdk")),
+            "/app/zatca-sdk/Apps": ls(Path("/app/zatca-sdk/Apps")),
+            "/app/zatca-sdk/Data/Certificates": ls(Path("/app/zatca-sdk/Data/Certificates")),
+        },
+        "fatoora_help_from_sdk_root": out1,
+        "fatoora_help_from_app": out2
+    }
