@@ -17,6 +17,11 @@ WORKDIR /app
 # Copy all project files (including SDK folders: Apps + Data/Certificates)
 COPY . .
 
+RUN apt-get update && apt-get install -y dos2unix && \
+    find /app/zatca-sdk -type f \( -name "*.json" -o -name "*.xsl" -o -name "*.xsd" -o -name "*.txt" -o -name "fatoora" \) -exec dos2unix {} \; && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
 # Make fatoora executable
 RUN chmod +x /app/zatca-sdk/Apps/fatoora
 
