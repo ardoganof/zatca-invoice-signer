@@ -68,3 +68,42 @@ def zdiag():
     r = subprocess.run(cmd, cwd=str(SDK_ROOT), env=BASE_ENV,
                        capture_output=True, text=True, timeout=10)
     return {"rc": r.returncode, "stdout": r.stdout[-5000:], "stderr": r.stderr[-5000:]}
+
+@app.get("/defaults-audit")
+def defaults_audit():
+    import json
+    from pathlib import Path
+
+    dpath = Path("/app/zatca-sdk/Configuration/defaults.json")
+    if not dpath.exists():
+        return {"error": "defaults.json not found", "path": str(dpath)}
+
+    raw = dpath.read_bytes()
+    text = raw.decode("utf-8", errors="replace")
+    try:
+        data = json.loads(text)
+    except Exception as e:
+        return {
+            "path": str(dpath),
+            "size": len(raw),
+            "decode_preview": text[:500],
+            "json_parse": f"ERROR: {e}",
+        }
+
+    keys = [
+        "xsdPath","enSchematron","zatcaSchematron",
+        "certPath","privateKeyPath","pihPath",
+        "inputPath","usagePathFile"
+    ]
+    check = {}
+    for k in keys:
+        val = data.get(k)
+        check[k] = {"value": val, "is_null": (val is None)}
+
+    return {
+        "path": str(dpath),
+        "size": len(raw),
+        "data": data,
+        "keys_check": check,
+    }
+
