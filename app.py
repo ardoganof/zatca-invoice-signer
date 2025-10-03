@@ -35,8 +35,9 @@ async def sign_invoice(xml_invoice: UploadFile):
         "-output", str(signed_path),
     ]
 
-    r = subprocess.run(cmd, cwd=str(SDK_ROOT), env=BASE_ENV,
-                       capture_output=True, text=True)
+    r = subprocess.run(["./Apps/fatoora", "-sign", "-invoice", xml_path, "-signedInvoice", signed_output_path],
+               cwd="/app/zatca-sdk", capture_output=True, text=True)
+
 
     if signed_path.exists():
         return {
@@ -133,4 +134,16 @@ def config_audit():
             "/app/zatca-sdk/Data/PIH": list_files("/app/zatca-sdk/Data/PIH"),
             "/app/zatca-sdk/Configuration": list_files("/app/zatca-sdk/Configuration"),
         }
+    }
+
+@app.get("/symlink-check")
+def symlink_check():
+    import os
+    def stat(p):
+        return {"exists": os.path.exists(p),
+                "is_symlink": os.path.islink(p),
+                "realpath": os.path.realpath(p) if os.path.exists(p) else None}
+    return {
+        "/app/Data": stat("/app/Data"),
+        "/app/Configuration": stat("/app/Configuration"),
     }
