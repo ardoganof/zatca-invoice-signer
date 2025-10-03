@@ -25,6 +25,10 @@ RUN apt-get update && apt-get install -y dos2unix && \
 # Make fatoora executable
 RUN chmod +x /app/zatca-sdk/Apps/fatoora
 
+# Create compatibility symlinks for SDK's hard-coded "../../../" lookups
+RUN ln -sf /app/zatca-sdk/Data /app/Data && \
+    ln -sf /app/zatca-sdk/Configuration /app/Configuration
+
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
