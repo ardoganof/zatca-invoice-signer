@@ -23,20 +23,10 @@ async def sign_invoice(xml_invoice: UploadFile):
 
     xml_path.write_bytes(await xml_invoice.read())
 
-    cmd = [
-        "java",
-        "-Djdk.module.illegalAccess=deny",
-        "-Djdk.sunec.disableNative=false",
-        "-jar", str(JAR),
-        "--globalVersion", _extver(),
-        "-config", str(CONFIG_JSON),
-        "-cmd", "sign",
-        "-input", str(xml_path),
-        "-output", str(signed_path),
-    ]
+# run the patched script; -sign is what your local flow used
+    cmd = ["./Apps/fatoora", "-sign", "-invoice", str(xml_path), "-signedInvoice", str(signed_path)]
+    r = subprocess.run(cmd, cwd=str(SDK_ROOT), capture_output=True, text=True)
 
-    r = subprocess.run(["./Apps/fatoora", "-sign", "-invoice", xml_path, "-signedInvoice", signed_output_path],
-               cwd="/app/zatca-sdk", capture_output=True, text=True)
 
 
     if signed_path.exists():
