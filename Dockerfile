@@ -7,9 +7,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set FATOORA_HOME to Apps (where global.json + JAR live)
-ENV FATOORA_HOME=/app/zatca-sdk/Apps
-ENV PATH="${PATH}:${FATOORA_HOME}"
+# Set SDK environment for the CLI
+ENV SDK_CONFIG=/opt/render/project/src/zatca-sdk/Configuration/config.json
+ENV FATOORA_HOME=/opt/render/project/src/zatca-sdk/Apps
 
 # Create app directory
 WORKDIR /app
