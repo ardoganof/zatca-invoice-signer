@@ -209,3 +209,8 @@ __marimo__/
 # --- Keep ZATCA SDK files ---
 !zatca-sdk/
 !zatca-sdk/**
+
+.venv/
+venv/
+*/pyvenv.cfg
+
