@@ -17,6 +17,8 @@ WORKDIR /app
 # Copy all project files (including SDK folders: Apps + Data/Certificates)
 COPY . .
 
+chmod 600 /app/zatca-sdk/Data/Certificates/*.pem || true
+
 # Normalize line endings so the SDK reads text files cleanly on Linux
 RUN apt-get update && apt-get install -y dos2unix && \
     find /app/zatca-sdk -type f \
