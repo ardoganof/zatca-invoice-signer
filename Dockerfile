@@ -7,15 +7,16 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set SDK environment for the CLI
-ENV SDK_CONFIG=/opt/render/project/src/zatca-sdk/Configuration/config.json
-ENV FATOORA_HOME=/opt/render/project/src/zatca-sdk/Apps
-
 # Create app directory
 WORKDIR /app
 
 # Copy all project files (including SDK folders: Apps + Data/Certificates)
 COPY . .
+
+# Ensure the SDK always sees the Linux paths inside the container
+ENV SDK_CONFIG=/app/zatca-sdk/Configuration/config.json
+ENV FATOORA_HOME=/app/zatca-sdk/Apps
+
 
 # Normalize line endings so the SDK reads text files cleanly on Linux
 RUN apt-get update && apt-get install -y dos2unix && \
