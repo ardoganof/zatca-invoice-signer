@@ -1,17 +1,9 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
-: "${FATOORA_HOME:?FATOORA_HOME not set}"
-EXTVER=$(jq -r '.version' "${FATOORA_HOME}/global.json")
+EXTVER=$(jq -r '.version' ${FATOORA_HOME}/global.json)
 
-# Prefer env SDK_CONFIG; default to config.json under /app
-CFG="${SDK_CONFIG:-/app/zatca-sdk/Configuration/config.json}"
-[ -f "$CFG" ] || CFG="/app/zatca-sdk/Configuration/defaults.json"
+java -Djdk.module.illegalAccess=deny -Djdk.sunec.disableNative=false -jar ${FATOORA_HOME}/zatca-einvoicing-sdk-${EXTVER}.jar --globalVersion $EXTVER $1 $2 $3 $4 $5 $6
 
-exec java -Djdk.module.illegalAccess=deny -Djdk.sunec.disableNative=false \
-  -jar "${FATOORA_HOME}/zatca-einvoicing-sdk-${EXTVER}.jar" \
-  --globalVersion "${EXTVER}" \
-  -config "${CFG}" \
-  "$@"
+
 
 
