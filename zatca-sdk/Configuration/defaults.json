@@ -1,10 +1,10 @@
 {
-  "xsdPath": "./zatca-sdk/Data/Schemas/xsds/UBL2.1/xsd/maindoc/UBL-Invoice-2.1.xsd",
-  "enSchematron": "./zatca-sdk/Data/Rules/schematrons/CEN-EN16931-UBL.xsl",
-  "zatcaSchematron": "./zatca-sdk/Data/Rules/schematrons/20210819_ZATCA_E-invoice_Validation_Rules.xsl",
-  "certPath": "./zatca-sdk/Data/Certificates/cert.pem",
-  "privateKeyPath": "./zatca-sdk/Data/Certificates/ec-secp256k1-priv-key.pem",
-  "pihPath": "./zatca-sdk/Data/PIH/pih.txt",
-  "inputPath": "./zatca-sdk/Data/Input",
-  "usagePathFile": "./zatca-sdk/Configuration/usage.txt"
+  "xsdPath": "/app/zatca-sdk/Data/Schemas/xsds/UBL2.1/xsd/maindoc/UBL-Invoice-2.1.xsd",
+  "enSchematron": "/app/zatca-sdk/Data/Rules/schematrons/CEN-EN16931-UBL.xsl",
+  "zatcaSchematron": "/app/zatca-sdk/Data/Rules/schematrons/20210819_ZATCA_E-invoice_Validation_Rules.xsl",
+  "certPath": "/app/zatca-sdk/Data/Certificates/cert.pem",
+  "privateKeyPath": "/app/zatca-sdk/Data/Certificates/ec-secp256k1-priv-key.pem",
+  "pihPath": "/app/zatca-sdk/Data/PIH/pih.txt",
+  "inputPath": "/app/zatca-sdk/Data/Input",
+  "usagePathFile": "/app/zatca-sdk/Configuration/usage.txt"
 }
