@@ -3,7 +3,7 @@ FROM python:3.11-slim
 
 # Java + jq + dos2unix
 RUN apt-get update && apt-get install -y \
-      openjdk-17-jre-headless jq dos2unix \
+      openjdk-21-jre jq dos2unix \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV FATOORA_HOME=/app/zatca-sdk/Apps
