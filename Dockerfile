@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
 ENV FATOORA_HOME=/app/zatca-sdk/Apps
 ENV PATH="${PATH}:${FATOORA_HOME}"
 
+# Make local SDK importable by Python without installing it to PyPI
+ENV PYTHONPATH=/app/zatca-sdk
+
 WORKDIR /app
 COPY . .
 
